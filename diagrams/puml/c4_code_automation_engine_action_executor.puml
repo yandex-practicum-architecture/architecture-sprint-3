@@ -1,0 +1,88 @@
+@startuml
+' Skin params
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Arial
+skinparam shadowing false
+
+package "Action Executor" {
+    class ActionExecutorService {
+        +executeAction(Action, context: Map): ExecutionResult
+    }
+
+    interface ActionHandler {
+        +handle(Action, context: Map): ExecutionResult
+    }
+
+    class DefaultActionExecutorService implements ActionExecutorService {
+        +executeAction(Action, context: Map): ExecutionResult
+    }
+
+    class DeviceActionHandler implements ActionHandler {
+        +handle(Action, context: Map): ExecutionResult
+    }
+
+    class NotificationActionHandler implements ActionHandler {
+        +handle(Action, context: Map): ExecutionResult
+    }
+
+    class HttpActionHandler implements ActionHandler {
+        +handle(Action, context: Map): ExecutionResult
+    }
+
+    class ExecutionResult {
+        +success: boolean
+        +message: String
+        +data: Map
+    }
+}
+
+package "Domain" {
+    class Action {
+        +actionId: String
+        +actionType: String
+        +actionConfig: Map
+    }
+}
+
+package "External Services" {
+    interface DeviceService {
+        +controlDevice(deviceId: String, command: String): boolean
+    }
+    interface NotificationService {
+        +sendNotification(userId: String, message: String): boolean
+    }
+    interface HttpService {
+        +sendRequest(url: String, method: String, body: Map): HttpResponse
+    }
+    class HttpResponse {
+        +statusCode: int
+        +body: String
+    }
+}
+
+' Connections between layers
+ActionExecutorService ..> Action : uses
+DefaultActionExecutorService ..> ActionHandler : uses
+DefaultActionExecutorService ..> ExecutionResult : returns
+ActionHandler <|.. DeviceActionHandler : implements
+ActionHandler <|.. NotificationActionHandler : implements
+ActionHandler <|.. HttpActionHandler : implements
+
+DeviceActionHandler ..> DeviceService : uses
+NotificationActionHandler ..> NotificationService : uses
+HttpActionHandler ..> HttpService : uses
+
+ActionExecutorService <|.. DefaultActionExecutorService
+
+' Styling (optional)
+skinparam class {
+    BackgroundColor #E6E6FF
+    BorderColor #808080
+}
+
+skinparam interface {
+    BackgroundColor #F0FFF0
+    BorderColor #808080
+}
+
+@enduml

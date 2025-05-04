@@ -1,0 +1,38 @@
+@startuml
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Component.puml
+
+SHOW_PERSON_OUTLINE()
+
+Container(profile_store, "User Manager/Profile Store", "Java / Spring", "Управляет профилями пользователей и предпочтениями.") {
+
+    Component(user_profile_management, "User Profile Management", "Java / Spring", "Предоставляет API для управления профилями пользователей (CRUD). Валидация данных, управление ролями.")
+
+    Component(home_management, "Home Management", "Java / Spring", "Предоставляет API для управления информацией о доме (Home), комнатах (Room) и зонах (Zone). CRUD, управление связями.")
+
+    Component(preference_management, "Preference Management", "Java / Spring", "Управляет пользовательскими предпочтениями (например, настройки уведомлений, темы оформления). CRUD, обработка настроек по умолчанию.")
+
+    Component(relationship_management, "Relationship Management", "Java / Spring", "Управляет связями между пользователями и домами (например, владелец, гость). Управление доступом, валидация связей.")
+
+    Component(profile_repository, "Profile Repository", "JPA/MongoDB", "Хранит данные о профилях пользователей, информации о доме, комнатах и зонах. Предоставляет доступ, CRUD операции.")
+}
+
+Container(api_gateway, "API Gateway", "Java / Spring", "Единственная точка доступа для всех API-запросов. Выполняет аутентификацию, авторизацию и маршрутизацию запросов к соответствующим микросервисам.")
+
+ContainerDb(database, "Database", "PostgreSQL/MongoDB", "Хранит данные пользователей, информацию об устройствах, правила автоматизации и конфигурации зон.")
+
+Rel(user_profile_management, profile_repository, "Читает/Записывает", "JPA/MongoDB queries. CRUD operations.")
+Rel(home_management, profile_repository, "Читает/Записывает", "JPA/MongoDB queries. CRUD operations.")
+Rel(preference_management, profile_repository, "Читает/Записывает", "JPA/MongoDB queries. CRUD operations.")
+Rel(relationship_management, profile_repository, "Читает/Записывает", "JPA/MongoDB queries. CRUD operations.")
+Rel(api_gateway, profile_store, "Использует", "gRPC / REST API. Запрос/Ответ")
+
+
+' Внешние связи
+Rel(profile_store, database, "Читает/Записывает", "SQL / NoSQL. Данные о профилях пользователей, доме, комнатах и зонах.")
+
+note top of profile_store
+    Cloud-Native: Kubernetes, Auto-Scaling, Service Discovery, Load Balancing
+end note
+
+center footer PlantUML - C4 Model
+@enduml

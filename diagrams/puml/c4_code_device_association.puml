@@ -1,0 +1,129 @@
+@startuml
+' Skin params
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Arial
+skinparam shadowing false
+
+' Объявление пакетов для каждого слоя
+package "Controllers" {
+    class AssociationController {
+        +associateDeviceWithUser(deviceId: Long, userId: Long): ResponseEntity<Void>
+        +associateDeviceWithRoom(deviceId: Long, roomId: Long): ResponseEntity<Void>
+        +associateDeviceWithArea(deviceId: Long, areaId: Long): ResponseEntity<Void>
+        +disassociateDevice(deviceId: Long): ResponseEntity<Void>
+        +getDeviceAssociations(deviceId: Long): AssociationResponse
+    }
+
+    class AssociationResponse {
+        +deviceId: Long
+        +userId: Long
+        +roomId: Long
+        +areaId: Long
+    }
+}
+
+package "Services" {
+    interface AssociationService {
+        +associateDeviceWithUser(deviceId: Long, userId: Long): void
+        +associateDeviceWithRoom(deviceId: Long, roomId: Long): void
+        +associateDeviceWithArea(deviceId: Long, areaId: Long): void
+        +disassociateDevice(deviceId: Long): void
+        +getDeviceAssociations(deviceId: Long): Association
+    }
+
+    class DefaultAssociationService implements AssociationService {
+        +associateDeviceWithUser(deviceId: Long, userId: Long): void
+        +associateDeviceWithRoom(deviceId: Long, roomId: Long): void
+        +associateDeviceWithArea(deviceId: Long, areaId: Long): void
+        +disassociateDevice(deviceId: Long): void
+        +getDeviceAssociations(deviceId: Long): Association
+    }
+}
+
+package "Repository" {
+    interface DeviceAssociationRepository {
+        +findByDeviceId(deviceId: Long): Optional<DeviceAssociationEntity>
+        +save(DeviceAssociationEntity): DeviceAssociationEntity
+        +deleteByDeviceId(deviceId: Long): void
+    }
+
+    ' Foreign Key Repositories
+    interface UserRepository {
+        +findById(userId: Long): Optional<UserEntity>
+    }
+    interface RoomRepository {
+        +findById(roomId: Long): Optional<RoomEntity>
+    }
+    interface AreaRepository {
+        +findById(areaId: Long): Optional<AreaEntity>
+    }
+
+    class DeviceAssociationEntity {
+        +deviceId: Long
+        +userId: Long
+        +roomId: Long
+        +areaId: Long
+    }
+    class UserEntity {
+      +user_id: bigint
+      +tenant_id: bigint
+      +username: string
+      +password: string
+    }
+
+    class RoomEntity {
+      +room_id: bigint
+      +area_id: bigint
+      +name: string
+    }
+
+    class AreaEntity {
+      +area_id: bigint
+      +home_id: bigint
+      +name: string
+    }
+}
+
+package "Domain" {
+    class Association {
+        +deviceId: Long
+        +userId: Long
+        +roomId: Long
+        +areaId: Long
+    }
+}
+
+' Связи между слоями
+AssociationController ..> AssociationResponse : использует
+AssociationController ..> AssociationService : использует
+DefaultAssociationService ..> DeviceAssociationRepository : использует
+DefaultAssociationService ..> UserRepository : uses
+DefaultAssociationService ..> RoomRepository : uses
+DefaultAssociationService ..> AreaRepository : uses
+DefaultAssociationService ..> DeviceAssociationEntity : преобразует в/из
+DefaultAssociationService ..> Association : преобразует в/из
+AssociationService <|.. DefaultAssociationService
+
+' Стили (необязательно)
+skinparam class {
+    BackgroundColor #E6E6FF
+    BorderColor #808080
+}
+
+skinparam interface {
+    BackgroundColor #F0FFF0
+    BorderColor #808080
+}
+
+' Описания компонентов в виде заметок (необязательно)
+note top of AssociationController : "Управляет связями устройств с пользователями, комнатами и зонами."
+note top of AssociationService : "Определяет бизнес-логику для управления связями устройств."
+note top of DefaultAssociationService : "Реализация AssociationService."
+note top of DeviceAssociationRepository : "Репозиторий для связей устройств."
+note top of UserRepository : "Репозиторий для пользователей."
+note top of RoomRepository : "Репозиторий для комнат."
+note top of AreaRepository : "Репозиторий для зон."
+note top of DeviceAssociationEntity : "Сущность связи устройства."
+note top of Association : "Доменная модель связи."
+
+@enduml

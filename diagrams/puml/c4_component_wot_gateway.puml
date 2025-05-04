@@ -1,0 +1,38 @@
+@startuml
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Component.puml
+
+SHOW_PERSON_OUTLINE()
+
+Container(wot_gateway, "WoT Gateway", "Java / Spring", "Адаптирует и переводит описания WoT-объектов, управляет взаимодействием с локальными устройствами. Circuit Breaker для защиты от сбоев.") {
+
+    Component(wot_adapter, "WoT Adapter", "Java / Spring", "Адаптирует и переводит описания WoT-объектов (Thing Descriptions) в единый внутренний формат.")
+
+    Component(protocol_adapter, "Protocol Adapter", "Java / Spring", "Обрабатывает взаимодействие с устройствами, использующими различные протоколы (HTTP, MQTT, CoAP).")
+
+    Component(device_proxy, "Device Proxy", "Java / Spring", "Предоставляет прокси-объекты для устройств WoT, позволяя управлять ими через унифицированный API.")
+
+    Component(security_manager, "Security Manager", "Java / Spring", "Обеспечивает безопасность взаимодействия с устройствами WoT, применяя механизмы аутентификации и авторизации.")
+
+    Component(status_reporter, "Status Reporter", "Java / Spring", "Отправляет обновления статуса устройств в Event Bus.")
+}
+
+Container(event_bus, "Event Bus", "Kafka/RabbitMQ", "Facilitates asynchronous communication between backend services.")
+Container(device_manager, "Device Manager", "Java / Spring", "Manages devices, their properties, and relationships to users and zones. Предоставляет CRUD-операции для устройств.")
+Component(wot_discovery, "WoT Discovery", "Java / Spring", "Обнаруживает устройства WoT в локальной сети. Использует mDNS/DNS-SD или другие протоколы обнаружения.")
+
+Rel(wot_adapter, protocol_adapter, "Использует", "Для взаимодействия с устройствами.")
+Rel(protocol_adapter, device_proxy, "Управляет", "Проксирует запросы к устройствам.")
+Rel(security_manager, protocol_adapter, "Обеспечивает", "Политику безопасности.")
+Rel(status_reporter, event_bus, "Публикует", "События об изменении статуса устройств.")
+
+' Внешние связи
+Rel(wot_gateway, event_bus, "Потребляет/Публикует", "Events. Обновления статуса устройства и команды управления.")
+Rel(wot_gateway, device_manager, "Запрашивает", "REST API. Получение информации об устройстве.")
+Rel(wot_gateway, wot_discovery, "Запрашивает", "REST API. Получение информации о WoT-объектах.")
+
+note top of wot_gateway
+    Cloud-Native: Kubernetes, Auto-Scaling, Service Discovery, Load Balancing, Circuit Breaker
+end note
+
+center footer PlantUML - C4 Model
+@enduml

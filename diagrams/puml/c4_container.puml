@@ -1,0 +1,91 @@
+@startuml
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Container.puml
+
+System_Boundary(c1, "Система Умного Дома") {
+
+    Container_Boundary(client_apps, "Клиентские приложения") {
+        Container(web_portal, "Web Portal", "JavaScript, React/Angular/Vue.js", "Предоставляет веб-интерфейс для управления устройствами и автоматизацией.")
+        Container(ios_app, "iOS Mobile App", "Swift", "Предоставляет нативный интерфейс для управления устройствами и автоматизацией на iOS.")
+        Container(android_app, "Android Mobile App", "Kotlin", "Предоставляет нативный интерфейс для управления устройствами и автоматизацией на Android.")
+    }
+
+    Container(api_gateway, "API Gateway", "Java / Spring", "Единственная точка доступа для всех API-запросов. Выполняет аутентификацию, авторизацию и маршрутизацию запросов к соответствующим микросервисам.")
+
+    Container_Boundary(auth_services, "Сервисы аутентификации и авторизации") {
+        Container(authentication, "Authentication Service", "Java / Spring", "Управляет аутентификацией пользователей (логин, регистрация, сброс пароля). Использует JWT (JSON Web Tokens) для безопасной передачи информации о пользователе.")
+        Container(authorization, "Authorization Service", "Java / Spring", "Определяет права доступа пользователя к различным ресурсам и функциям системы. Реализует ролевую модель доступа (администратор, пользователь, гость).")
+		Container(certificate_authority, "Certificate Authority/KMS", "Java / Spring", "Управление сертификатами и ключами для безопасного взаимодействия")
+    }
+
+    ContainerDb(database, "Database", "PostgreSQL/MongoDB", "Хранит данные пользователей, информацию об устройствах, правила автоматизации и конфигурации зон. Хранит данные о пользователях, устройствах, автоматизациях, зонах и других объектах системы.")
+    
+    Container_Boundary(device_automation, "Сервисы правил автоматизации устройств") {
+        Container(automation_engine, "Automation Engine", "Java / Spring", "Исполняет правила автоматизации на основе событий и условий. Обрабатывает правила автоматизации, созданные пользователями, и запускает действия на основе событий, условий и расписаний.")
+        Container(rule_engine, "Rule Engine", "Drools / Jess / Custom DSL", "Оценивает условия правил автоматизации на основе данных, поступающих от устройств и других источников. Использует DSL (Domain Specific Language) для описания правил.")
+    }
+
+	Container(wot_gateway, "WoT Gateway (Per User)", "Java / Spring", "Адаптирует и переводит описания WoT-объектов, управляет взаимодействием с локальными устройствами. Разворачивается индивидуально для каждого пользователя (или группы пользователей) в облаке.")  
+	Container(wot_discovery, "WoT Discovery", "Java / Spring", "Обнаруживает устройства WoT в сети пользователя, используя mDNS/DNS-SD и другие протоколы обнаружения.")
+
+    Container_Boundary(device_services, "Сервисы управления устройствами") {
+        Container(device_manager, "Device Manager", "Java / Spring", "Управляет устройствами пользователей (добавление, удаление, редактирование). Хранит информацию о устройствах (имя, тип, состояние, зоны).")
+		Container(device_health_monitoring, "Device Health Monitoring Services", "Java / Spring", "Мониторинг состояния устройств (онлайн/оффлайн, уровень заряда батареи, ошибки). Предоставление возможности удаленной диагностики и устранения неполадок с устройствами")
+    }
+
+    Container(event_bus, "Event Bus", "Kafka/RabbitMQ", "Обеспечивает асинхронную коммуникацию между службами бэкенда. Передает события между микросервисами. Обеспечивает асинхронное взаимодействие и отказоустойчивость системы.")
+
+    Container(user_manager, "User Manager/Profile Store", "Java / Spring", "Управляет профилями пользователей (имя, email, адрес, настройки). Хранит профили пользователей и их настройки (темы, языки, предпочтения).")
+
+    Container(cloud_services, "Cloud Services and Tenants", "Java / Spring", "Интеграция с облачными сервисами партнеров. Управление арендаторами в SaaS-модели.")  
+
+    Rel(web_portal, api_gateway, "Использует", "REST API. Запрос/Ответ")
+    Rel(ios_app, api_gateway, "Использует", "REST API. Запрос/Ответ")
+    Rel(android_app, api_gateway, "Использует", "REST API. Запрос/Ответ")
+
+    Rel(api_gateway, authentication, "Использует", "gRPC / REST API. Запрос/Ответ")
+    Rel(api_gateway, authorization, "Использует", "gRPC / REST API. Запрос/Ответ")
+
+    Rel(api_gateway, device_health_monitoring, "Использует", "gRPC / REST API. Запрос/Ответ")
+    Rel(api_gateway, certificate_authority, "Использует", "gRPC / REST API. Запрос/Ответ")
+    Rel(api_gateway, device_manager, "Использует", "gRPC / REST API. Запрос/Ответ")
+    Rel(api_gateway, automation_engine, "Использует", "gRPC / REST API. Запрос/Ответ")
+    Rel(api_gateway, user_manager, "Использует", "gRPC / REST API. Запрос/Ответ")
+
+    Rel(device_manager, database, "Читает/Записывает", "SQL / NoSQL. БД / Сервис")
+    Rel(automation_engine, database, "Читает/Записывает", "SQL / NoSQL. БД / Сервис")
+    Rel(authentication, database, "Читает/Записывает", "SQL / NoSQL. БД / Сервис")
+    Rel(authorization, database, "Читает", "SQL / NoSQL. БД / Сервис")
+    Rel(user_manager, database, "Читает/Записывает", "SQL / NoSQL. БД / Сервис")
+
+    Rel(automation_engine, event_bus, "Публикует и потребляет", "События. Асинхронное взаимодействие. Saga (для сложных транзакций)")
+    Rel(device_manager, event_bus, "Публикует", "События. Изменение состояния устройства.")
+
+    Rel(wot_discovery, event_bus, "Публикует", "Событие об обнаружении устройства. Асинхронное взаимодействие")
+    Rel(wot_gateway, event_bus, "Получает и публикует", "События. Асинхронное взаимодействие")
+    Rel(wot_gateway, device_manager, "Запрашивает", "REST API. Запрос/Ответ") // Получить информацию об устройстве, обновить статус
+
+    Rel(automation_engine, rule_engine, "Использует", "API. Запрос/Ответ")
+
+    Rel(cloud_services, api_gateway, "Использует", "API. Взаимодействие с внешними сервисами.")
+    Rel(device_health_monitoring, event_bus, "Потребляет", "События о состоянии устройств.")
+    Rel(device_health_monitoring, device_manager, "Использует", "API. Диагностика устройств.")
+    Rel(certificate_authority, authentication, "Использует", "API. Управление сертификатами.")
+    Rel(cloud_services, api_gateway, "Управляет", "Арендаторами. (для SaaS)")
+
+}
+
+System_Ext(iot_devices, "IoT Devices", "Zigbee, Z-Wave, BLE, Wi-Fi", "Различные устройства умного дома, такие как освещение, датчики и бытовая техника.")
+
+Rel(iot_devices, wot_gateway, "Коммуницирует с", "Протоколами WoT (HTTP, MQTT)")
+
+Person(user, "Пользователь", "Управляет устройствами умного дома, настраивает автоматизации и следит за состоянием устройств через веб-портал и мобильные приложения.")
+Person(admin, "Администратор", "Управляет пользователями, настраивает системы, контролирует и анализирует работу платформы.")
+
+Rel(user, web_portal, "Использует")
+Rel(user, ios_app, "Использует")
+Rel(user, android_app, "Использует")
+Rel(admin, web_portal, "Использует для администрирования")
+Rel(admin, ios_app, "Использует для администрирования")
+Rel(admin, android_app, "Использует для администрирования")
+Rel(admin, api_gateway, "Настраивает")
+@enduml
