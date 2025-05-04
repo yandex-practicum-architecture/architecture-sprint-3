@@ -1,0 +1,225 @@
+@startuml
+' Skin params
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Arial
+skinparam shadowing false
+
+package "Home Management" {
+    class HomeController {
+        +createHome(HomeRequest): HomeResponse
+        +getHome(homeId: String): HomeResponse
+        +updateHome(homeId: String, HomeRequest): HomeResponse
+        +deleteHome(homeId: String): ResponseEntity<Void>
+        +createRoom(roomId:String, RoomRequest): RoomResponse
+        +getRoom(roomId: String): RoomResponse
+        +updateRoom(roomId: String, RoomRequest): RoomResponse
+        +deleteRoom(roomId: String): ResponseEntity<Void>
+        +createArea(areaId: String, AreaRequest): AreaResponse
+        +getArea(areaId: String): AreaResponse
+        +updateArea(areaId: String, AreaRequest): AreaResponse
+        +deleteArea(areaId: String): ResponseEntity<Void>
+        +getHomesByTenant(tenantId: String): List<HomeResponse>
+    }
+
+    class HomeRequest {
+        +tenantId: String
+        +name: String
+        +address: String
+        +latitude: double
+        +longitude: double
+    }
+
+    class HomeResponse {
+        +homeId: String
+        +tenantId: String
+        +name: String
+        +address: String
+        +latitude: double
+        +longitude: double
+    }
+
+    class RoomRequest {
+        +areaId: String
+        +name: String
+        +description: String
+    }
+
+    class RoomResponse {
+        +roomId: String
+        +areaId: String
+        +name: String
+        +description: String
+    }
+
+    class AreaRequest {
+       +homeId: String
+       +name: String
+       +description: String
+       +areaType: String
+    }
+
+     class AreaResponse {
+            +areaId: String
+            +homeId: String
+            +name: String
+            +description: String
+            +areaType: String
+        }
+}
+
+package "Services" {
+    interface HomeService {
+        +createHome(Home): Home
+        +getHome(homeId: String): Home
+        +updateHome(homeId: String, Home): Home
+        +deleteHome(homeId: String): void
+        +createRoom(Room): Room
+        +getRoom(roomId: String): Room
+        +updateRoom(roomId: String, Room): Room
+        +deleteRoom(roomId: String): void
+        +createArea(Area): Area
+        +getArea(areaId: String): Area
+        +updateArea(areaId: String, Area): Area
+        +deleteArea(areaId: String): void
+        +getHomesByTenant(tenantId: String): List<Home>
+    }
+
+    class DefaultHomeService implements HomeService {
+        +createHome(Home): Home
+        +getHome(homeId: String): Home
+        +updateHome(homeId: String, Home): Home
+        +deleteHome(homeId: String): void
+        +createRoom(Room): Room
+        +getRoom(roomId: String): Room
+        +updateRoom(roomId: String, Room): Room
+        +deleteRoom(roomId: String): void
+        +createArea(Area): Area
+        +getArea(areaId: String): Area
+        +updateArea(areaId: String, Area): Area
+        +deleteArea(areaId: String): void
+        +getHomesByTenant(tenantId: String): List<Home>
+    }
+}
+
+package "Repository" {
+    interface HomeRepository {
+        +findById(homeId: String): Optional<HomeEntity>
+        +save(HomeEntity): HomeEntity
+        +deleteById(homeId: String): void
+        +findByTenantId(tenantId: String): List<HomeEntity>
+    }
+
+    interface RoomRepository {
+        +findById(roomId: String): Optional<RoomEntity>
+        +save(RoomEntity): RoomEntity
+        +deleteById(roomId: String): void
+    }
+
+    interface AreaRepository {
+        +findById(areaId: String): Optional<AreaEntity>
+        +save(AreaEntity): AreaEntity
+        +deleteById(areaId: String): void
+    }
+
+    class HomeEntity {
+        +homeId: String
+        +tenantId: String
+        +name: String
+        +address: String
+        +latitude: double
+        +longitude: double
+        +createdAt: Date
+        +updatedAt: Date
+    }
+
+    class RoomEntity {
+        +roomId: String
+        +areaId: String
+        +name: String
+        +description: String
+        +createdAt: Date
+        +updatedAt: Date
+    }
+
+    class AreaEntity {
+        +areaId: String
+        +homeId: String
+        +name: String
+        +description: String
+        +areaType: String
+        +createdAt: Date
+        +updatedAt: Date
+    }
+}
+
+package "Domain" {
+    class Home {
+        +homeId: String
+        +tenantId: String
+        +name: String
+        +address: String
+        +latitude: double
+        +longitude: double
+    }
+
+    class Room {
+        +roomId: String
+        +areaId: String
+        +name: String
+        +description: String
+    }
+
+    class Area {
+        +areaId: String
+        +homeId: String
+        +name: String
+        +description: String
+        +areaType: String
+    }
+}
+
+' Connections between layers
+HomeController ..> HomeRequest : использует
+HomeController ..> HomeResponse : использует
+HomeController ..> RoomRequest : использует
+HomeController ..> RoomResponse : использует
+HomeController ..> AreaRequest: использует
+HomeController ..> AreaResponse: использует
+HomeController ..> HomeService : использует
+DefaultHomeService ..> HomeRepository : использует
+DefaultHomeService ..> RoomRepository : использует
+DefaultHomeService ..> AreaRepository : использует
+DefaultHomeService ..> HomeEntity : преобразует в/из
+DefaultHomeService ..> RoomEntity : преобразует в/из
+DefaultHomeService ..> AreaEntity : преобразует в/из
+HomeService <|.. DefaultHomeService
+Home <.. HomeEntity : преобразует в/из
+Room <.. RoomEntity : преобразует в/из
+Area <.. AreaEntity : преобразует в/из
+
+' Styling (optional)
+skinparam class {
+    BackgroundColor #E6E6FF
+    BorderColor #808080
+}
+
+skinparam interface {
+    BackgroundColor #F0FFF0
+    BorderColor #808080
+}
+
+' Component descriptions as notes
+note top of HomeController : "Обрабатывает HTTP запросы, валидирует данные, \nи вызывает HomeService для обработки."
+note top of HomeService : "Определяет бизнес-логику для управления домами, комнатами и зонами."
+note top of DefaultHomeService : "Реализация HomeService, координирует доступ к данным через HomeRepository, RoomRepository, AreaRepository."
+note top of HomeRepository : "Предоставляет интерфейс для взаимодействия с базой данных для домов."
+note top of HomeEntity : "Представляет структуру данных дома в базе данных."
+note top of RoomRepository : "Предоставляет интерфейс для взаимодействия с базой данных для комнат."
+note top of RoomEntity : "Представляет структуру данных комнаты в базе данных."
+note top of AreaRepository : "Предоставляет интерфейс для взаимодействия с базой данных для зон."
+note top of AreaEntity : "Представляет структуру данных зоны в базе данных."
+note top of Home : "Доменная модель дома."
+note top of Room : "Доменная модель комнаты."
+note top of Area : "Доменная модель зоны."
+
+@enduml

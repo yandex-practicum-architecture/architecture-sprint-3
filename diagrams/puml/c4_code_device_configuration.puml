@@ -1,0 +1,84 @@
+@startuml
+' Skin params
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Arial
+skinparam shadowing false
+
+' Объявление пакетов для каждого слоя
+package "Controllers" {
+    class ConfigurationController {
+        +getDeviceConfiguration(deviceId: Long): DeviceConfigurationResponse
+        +updateDeviceConfiguration(deviceId: Long, configurationRequest: DeviceConfigurationRequest): ResponseEntity<Void>
+    }
+
+    class DeviceConfigurationRequest {
+        +properties: Map<String, String>
+    }
+
+    class DeviceConfigurationResponse {
+        +deviceId: Long
+        +properties: Map<String, String>
+    }
+}
+
+package "Services" {
+    interface ConfigurationService {
+        +getDeviceConfiguration(deviceId: Long): DeviceConfiguration
+        +updateDeviceConfiguration(deviceId: Long, configuration: DeviceConfiguration): void
+    }
+
+    class DefaultConfigurationService implements ConfigurationService {
+        +getDeviceConfiguration(deviceId: Long): DeviceConfiguration
+        +updateDeviceConfiguration(deviceId: Long, configuration: DeviceConfiguration): void
+    }
+}
+
+package "Repository" {
+    interface DeviceConfigurationRepository {
+        +findByDeviceId(deviceId: Long): Optional<DeviceConfigurationEntity>
+        +save(DeviceConfigurationEntity): DeviceConfigurationEntity
+    }
+
+    class DeviceConfigurationEntity {
+        +deviceId: Long
+        +configurationData: String  // JSON representation
+    }
+}
+
+package "Domain" {
+    class DeviceConfiguration {
+        +deviceId: Long
+        +properties: Map<String, String>
+    }
+}
+
+' Связи между слоями
+ConfigurationController ..> DeviceConfigurationRequest : использует
+ConfigurationController ..> DeviceConfigurationResponse : использует
+ConfigurationController ..> ConfigurationService : использует
+DefaultConfigurationService ..> DeviceConfigurationRepository : использует
+DefaultConfigurationService ..> DeviceConfiguration : преобразует в/из (через JSON)
+DefaultConfigurationService ..> DeviceConfigurationEntity : преобразует в/из (через JSON)
+ConfigurationService <|.. DefaultConfigurationService
+DeviceConfiguration <.. DeviceConfigurationRequest : validates
+DeviceConfiguration <.. DeviceConfigurationResponse : formats
+
+' Стили (необязательно)
+skinparam class {
+    BackgroundColor #E6E6FF
+    BorderColor #808080
+}
+
+skinparam interface {
+    BackgroundColor #F0FFF0
+    BorderColor #808080
+}
+
+' Описания компонентов в виде заметок (необязательно)
+note top of ConfigurationController : "Обрабатывает запросы на конфигурацию устройств."
+note top of ConfigurationService : "Определяет бизнес-логику для управления конфигурацией."
+note top of DefaultConfigurationService : "Реализация ConfigurationService."
+note top of DeviceConfigurationRepository : "Репозиторий для конфигураций устройств."
+note top of DeviceConfigurationEntity : "Сущность конфигурации устройства."
+note top of DeviceConfiguration : "Доменная модель конфигурации устройства."
+@enduml

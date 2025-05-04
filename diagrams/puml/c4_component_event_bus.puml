@@ -1,0 +1,42 @@
+@startuml
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Component.puml
+
+SHOW_PERSON_OUTLINE()
+
+Container(event_bus, "Event Bus", "Kafka/RabbitMQ", "Обеспечивает асинхронную коммуникацию между сервисами бэкенда. Eventual Consistency. Управляемый облачный сервис (например, Yandex Cloud).") {
+
+    Component(message_broker, "Message Broker", "Kafka/RabbitMQ", "Обеспечивает надежную доставку сообщений между сервисами. Управление топиками, очередями, exchange.")
+
+    Component(topic_manager, "Topic Manager", "Kafka/Custom", "Управляет топиками (в Kafka) или exchange/очередями (в RabbitMQ). Автоматическое создание, удаление, конфигурирование.")
+
+    Component(message_router, "Message Router", "Custom/Kafka Streams/RabbitMQ Streams", "Осуществляет маршрутизацию сообщений к соответствующим подписчикам на основе правил.")
+
+    Component(schema_registry, "Schema Registry", "Confluent Schema Registry/Custom", "Хранит схемы сообщений для обеспечения совместимости и валидации. Поддержка эволюции схем.")
+
+    Component(monitoring, "Monitoring", "Prometheus/Grafana/Custom", "Собирает метрики о производительности и доступности Message Bus. Оповещения об ошибках и перегрузках.")
+}
+
+Component(device_manager, "Device Manager", "Java / Spring", "Управляет устройствами, их свойствами и ассоциациями с пользователями и зонами. Предоставляет CRUD-операции для устройств.")
+Component(automation_engine, "Automation Engine", "Java / Spring", "Исполняет правила автоматизации на основе событий и условий. Слушает шину событий и инициирует действия.")
+Component(wot_gateway, "WoT Gateway", "Java / Spring", "Адаптирует и переводит описания WoT-объектов, управляет взаимодействием с локальными устройствами.")
+Component(wot_discovery, "WoT Discovery", "Java / Spring", "Обнаруживает устройства WoT в локальной сети. Использует mDNS/DNS-SD или другие протоколы обнаружения.")
+
+Rel(message_broker, topic_manager, "Использует", "Для управления топиками/очередями.")
+Rel(message_router, message_broker, "Перенаправляет", "Сообщения к подписчикам.")
+Rel(message_router, schema_registry, "Валидирует", "Сообщения по схемам.")
+Rel(monitoring, message_broker, "Собирает", "Метрики о производительности.")
+
+' Внешние связи
+
+Rel(device_manager, event_bus, "Публикует", "События.  Обновление/создание/удаление устройства.")
+Rel(automation_engine, event_bus, "Потребляет/Публикует", "События. События об изменении состояния устройств/команды управления.")
+Rel(wot_gateway, event_bus, "Потребляет/Публикует", "События. Обновления статуса устройства/команды управления.")
+Rel(wot_discovery, event_bus, "Публикует", "События. Обнаружение устройств WoT.")
+
+note top of event_bus
+    Cloud-Native: Управляемый облачный сервис (например, Yandex Cloud).
+    Eventual Consistency.
+end note
+
+center footer PlantUML - C4 Model
+@enduml

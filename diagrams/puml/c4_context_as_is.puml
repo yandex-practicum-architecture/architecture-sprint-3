@@ -1,0 +1,24 @@
+@startuml
+!include https://raw.githubusercontent.com/plantuml-stdlib/C4-PlantUML/master/C4_Context.puml
+' uncomment the following line and comment the first to use locally
+' !include C4_Context.puml
+
+LAYOUT_WITH_LEGEND()
+
+title Контекстная диаграмма системы управления отоплением
+
+Person(user, "Пользователь", "Управляет отоплением и просматривает температуру в доме.")
+
+Enterprise_Boundary(c0, "Система Управления Отоплением") {
+    System(monolithic_app, "Монолитное приложение", "Java, PostgreSQL", "Управляет отоплением и получает данные с датчиков.")
+    
+    System_Ext(sensor, "Температурный датчик", "Отслеживает текущую температуру.")
+    System_Ext(heating_system, "Система отопления", "Управляет обогревом помещений.")
+}
+
+Rel_Neighbor(user, monolithic_app, "Отправляет запросы на управление")
+Rel_R(monolithic_app, sensor, "Запрашивает данные о температуре")
+Rel_D(sensor, heating_system, "Управляет обогревом")
+Rel_Back(monolithic_app, heating_system, "Управляет отоплением в домах")
+
+@enduml

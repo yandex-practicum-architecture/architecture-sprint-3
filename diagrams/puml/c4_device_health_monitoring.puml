@@ -1,0 +1,22 @@
+@startuml
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Component.puml
+
+SHOW_PERSON_OUTLINE()
+
+Container(device_health_monitoring, "Device Health Monitoring Services", "Java / Spring", "Сервисы мониторинга устройств") {
+	Component(device_health, "Мониторинг состояния устройств", "Java / Spring", "Мониторинг состояния устройств (онлайн / оффлайн, уровень заряда батареи, ошибки)")
+	
+	Component(remote_diagnostics, "Удаленная диагностика", "Java / Spring", "Предоставление возможности удаленной диагностики и устранения неполадок с устройствами")
+}
+
+Container(event_bus, "Event Bus", "Kafka/RabbitMQ", "Обеспечивает асинхронную коммуникацию между сервисами бэкенда, позволяя передачу и обработку событий и сообщений без необходимости прямого соединения между ними.")
+Container(api_gateway, "API Gateway", "Java / Spring", "Единственная точка доступа для всех API-запросов. Выполняет аутентификацию, авторизацию и маршрутизацию запросов к соответствующим микросервисам.")
+
+' Внешние связи
+Rel(device_health, event_bus, "Публикует/Потребляет", "События с состоянием устройств.")
+Rel(remote_diagnostics, event_bus, "Публикует/Потребляет", "События с запросами на удаленную диагностику.")
+Rel(api_gateway, device_health, "Направляет", "API запросы.")
+Rel(api_gateway, remote_diagnostics, "Направляет", "API запросы.")
+
+
+@enduml

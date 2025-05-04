@@ -1,0 +1,72 @@
+@startuml
+participant Пользователь as User
+participant "Приложение (Телефон)" as App
+participant "Device API" as DeviceAPI
+participant "Device Repository" as DeviceRepo
+participant "WoT Gateway" as WoTGateway
+participant "Кондиционер" as AC
+participant "Event Bus" as EventBus
+participant "Device Status Updater" as DSU
+
+activate User
+User -> App: Открывает приложение
+activate App
+
+App -> DeviceAPI: Запрашивает WoT TD кондиционера
+activate DeviceAPI
+
+DeviceAPI -> DeviceRepo: Находит кондиционер и его WoT TD
+activate DeviceRepo
+DeviceRepo -->> DeviceAPI: Возвращает WoT TD
+deactivate DeviceRepo
+
+DeviceAPI -->> App: Возвращает WoT TD кондиционера
+deactivate DeviceAPI
+
+App -> User: Отображает свойства и действия
+
+User -> App: Устанавливает температуру на 20°C
+App -> DeviceAPI: Вызывает setTemperature WoT Action (temp: 20°C)
+activate DeviceAPI
+
+DeviceAPI -> DeviceRepo: Находит кондиционер и его WoT TD
+activate DeviceRepo
+DeviceRepo -->> DeviceAPI: Возвращает WoT TD
+deactivate DeviceRepo
+
+DeviceAPI -> DeviceAPI: Проверяет, что setTemperature есть в WoT TD
+DeviceAPI -> WoTGateway: Отправляет команду установить температуру (например, MQTT)
+activate WoTGateway
+
+WoTGateway -> AC: Отправляет команду кондиционеру (например, по MQTT)
+activate AC
+AC -> AC: Меняет температуру
+
+AC -> WoTGateway: Отправляет обновление статуса
+deactivate AC
+WoTGateway -> EventBus: Публикует событие "temperatureChanged"
+activate EventBus
+EventBus -->> WoTGateway: Подтверждение публикации
+
+WoTGateway -->> DeviceAPI: Подтверждение выполнения команды
+deactivate WoTGateway
+
+DeviceAPI -->> App: Подтверждение вызова действия
+deactivate DeviceAPI
+
+DSU <-- EventBus: Получает событие "temperatureChanged"
+activate DSU
+DSU -> DeviceRepo: Обновляет свойство temperature
+activate DeviceRepo
+DeviceRepo -->> DSU: Подтверждение обновления
+deactivate DeviceRepo
+DSU -> App: Обновляет характеристику CurrentTemperature
+deactivate DSU
+App -> App:  Обновляет UI
+
+App -> User: Получает уведомление об изменении температуры
+deactivate App
+deactivate User
+
+@enduml
+

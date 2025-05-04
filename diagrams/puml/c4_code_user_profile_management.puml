@@ -1,0 +1,188 @@
+@startuml
+' Skin params
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Arial
+skinparam shadowing false
+
+package "User Profile Management" {
+    class UserController {
+        +createUser(UserRequest): UserResponse
+        +getUser(userId: String): UserResponse
+        +updateUser(userId: String, UserRequest): UserResponse
+        +deleteUser(userId: String): ResponseEntity<Void>
+        +updateUserSettings(userId:String, UserSettingsRequest): UserSettingsResponse
+        +getUserSettings(userId: String): UserSettingsResponse
+    }
+
+    class UserRequest {
+        +tenantId: String
+        +username: String
+        +password: String
+        +email: String
+        +firstName: String
+        +lastName: String
+        +phoneNumber: String
+        +address: String
+        +role: String
+    }
+
+    class UserResponse {
+        +userId: String
+        +tenantId: String
+        +username: String
+        +email: String
+        +firstName: String
+        +lastName: String
+        +phoneNumber: String
+        +address: String
+        +role: String
+    }
+
+    class UserSettingsRequest {
+        +theme: String
+        +language: String
+        +fontSize: String
+        +pushNotificationsEnabled: boolean
+        +emailNotificationsEnabled: boolean
+        +dataAccessPermissions: Map
+        +twoFactorAuthEnabled: boolean
+    }
+
+    class UserSettingsResponse {
+        +userId: String
+        +theme: String
+        +language: String
+        +fontSize: String
+        +pushNotificationsEnabled: boolean
+        +emailNotificationsEnabled: boolean
+        +dataAccessPermissions: Map
+        +twoFactorAuthEnabled: boolean
+    }
+}
+
+package "Services" {
+    interface UserService {
+        +createUser(User): User
+        +getUser(userId: String): User
+        +updateUser(userId: String, User): User
+        +deleteUser(userId: String): void
+        +updateUserSettings(userId:String, UserSettings): UserSettings
+        +getUserSettings(userId: String): UserSettings
+    }
+
+    class DefaultUserService implements UserService {
+        +createUser(User): User
+        +getUser(userId: String): User
+        +updateUser(userId: String, User): User
+        +deleteUser(userId: String): void
+        +updateUserSettings(userId:String, UserSettings): UserSettings
+        +getUserSettings(userId: String): UserSettings
+    }
+}
+
+package "Repository" {
+    interface UserRepository {
+        +findById(userId: String): Optional<UserEntity>
+        +save(UserEntity): UserEntity
+        +deleteById(userId: String): void
+        +findByUsername(username: String): Optional<UserEntity>
+    }
+
+        interface UserSettingsRepository {
+            +findByUserId(userId: String): Optional<UserSettingsEntity>
+            +save(UserSettingsEntity): UserSettingsEntity
+        }
+
+    class UserEntity {
+        +userId: String
+        +tenantId: String
+        +username: String
+        +password: String
+        +email: String
+        +firstName: String
+        +lastName: String
+        +phoneNumber: String
+        +address: String
+        +role: String
+        +lastLogin: Date
+        +isActive: boolean
+        +createdAt: Date
+        +updatedAt: Date
+    }
+
+     class UserSettingsEntity {
+            +userId: String
+            +theme: String
+            +language: String
+            +fontSize: String
+            +pushNotificationsEnabled: boolean
+            +emailNotificationsEnabled: boolean
+            +dataAccessPermissions: String
+            +twoFactorAuthEnabled: boolean
+            +createdAt: Date
+            +updatedAt: Date
+        }
+}
+
+package "Domain" {
+    class User {
+        +userId: String
+        +tenantId: String
+        +username: String
+        +password: String
+        +email: String
+        +firstName: String
+        +lastName: String
+        +phoneNumber: String
+        +address: String
+        +role: String
+    }
+
+    class UserSettings {
+        +userId: String
+        +theme: String
+        +language: String
+        +fontSize: String
+        +pushNotificationsEnabled: boolean
+        +emailNotificationsEnabled: boolean
+        +dataAccessPermissions: Map
+        +twoFactorAuthEnabled: boolean
+    }
+}
+
+' Connections between layers
+UserController ..> UserRequest : использует
+UserController ..> UserResponse : использует
+UserController ..> UserService : использует
+UserController ..> UserSettingsRequest: использует
+UserController ..> UserSettingsResponse: использует
+DefaultUserService ..> UserRepository : использует
+DefaultUserService ..> UserSettingsRepository: использует
+DefaultUserService ..> UserEntity : преобразует в/из
+DefaultUserService ..> UserSettingsEntity : преобразует в/из
+UserService <|.. DefaultUserService
+User <.. UserEntity : преобразует в/из
+UserSettings <.. UserSettingsEntity : преобразует в/из
+
+' Styling (optional)
+skinparam class {
+    BackgroundColor #E6E6FF
+    BorderColor #808080
+}
+
+skinparam interface {
+    BackgroundColor #F0FFF0
+    BorderColor #808080
+}
+
+note top of UserController : "Обрабатывает HTTP запросы, валидирует данные, \nи вызывает UserService для обработки."
+note top of UserService : "Определяет бизнес-логику для управления профилями пользователей."
+note top of DefaultUserService : "Реализация UserService, координирует доступ к данным через UserRepository."
+note top of UserRepository : "Предоставляет интерфейс для взаимодействия с базой данных для пользователей."
+note top of UserEntity : "Представляет структуру данных пользователя в базе данных."
+note top of User : "Доменная модель пользователя."
+note top of UserSettingsRepository : "Предоставляет интерфейс для взаимодействия с базой данных для настроек пользователей."
+note top of UserSettingsEntity : "Представляет структуру данных настроек пользователя в базе данных."
+note top of UserSettings : "Доменная модель настроек пользователя."
+
+@enduml

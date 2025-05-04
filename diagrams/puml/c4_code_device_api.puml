@@ -1,0 +1,156 @@
+@startuml
+' Skin params
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Arial
+skinparam shadowing false
+
+' Объявление пакетов для каждого слоя
+package "Controllers" {
+    class DeviceController {
+        +createDevice(DeviceRequest): DeviceResponse
+        +getDevice(deviceId: Long): DeviceResponse
+        +updateDevice(deviceId: Long, DeviceRequest): DeviceResponse
+        +deleteDevice(deviceId: Long): ResponseEntity<Void>
+        +getDeviceState(deviceId: Long): List<DeviceStateResponse>
+        +setDeviceProperty(deviceId: Long, propertyId: Long, value: String): ResponseEntity<Void>
+    }
+    class DeviceRequest {
+        +tenantId: Long
+        +homeId: Long
+        +roomId: Long
+        +deviceTypeId: Long
+        +name: String
+        +manufacturer: String
+        +model: String
+        +serialNumber: String
+        +connectionType: String
+        +protocolId: Long
+        +location: String
+        +latitude: Double
+        +longitude: Double
+    }
+    class DeviceResponse {
+        +deviceId: Long
+        +tenantId: Long
+        +homeId: Long
+        +roomId: Long
+        +deviceTypeId: Long
+        +name: String
+        +status: String
+        +isOnline: Boolean
+    }
+    class DeviceStateResponse {
+        +propertyId: Long
+        +stateValue: String
+        +timestamp: String
+    }
+}
+
+package "Services" {
+    interface DeviceService {
+        +createDevice(Device): Device
+        +getDevice(deviceId: Long): Device
+        +updateDevice(deviceId: Long, Device): Device
+        +deleteDevice(deviceId: Long): void
+        +getDeviceState(deviceId: Long): List<DeviceState>
+        +setDeviceProperty(deviceId: Long, propertyId: Long, value: String): void
+    }
+
+    class DefaultDeviceService implements DeviceService {
+        +createDevice(Device): Device
+        +getDevice(deviceId: Long): Device
+        +updateDevice(deviceId: Long, Device): Device
+        +deleteDevice(deviceId: Long): void
+        +getDeviceState(deviceId: Long): List<DeviceState>
+        +setDeviceProperty(deviceId: Long, propertyId: Long, value: String): void
+    }
+}
+
+package "Repository" {
+    interface DeviceRepository {
+        +findById(deviceId: Long): Optional<DeviceEntity>
+        +save(DeviceEntity): DeviceEntity
+        +deleteById(deviceId: Long): void
+    }
+        interface DeviceTypeRepository {
+        +findById(deviceTypeId: Long): Optional<DeviceTypeEntity>
+        +findAll(): List<DeviceTypeEntity>
+    }
+    interface DeviceStateRepository {
+        +findByDeviceId(deviceId: Long): List<DeviceStateEntity>
+        +save(DeviceStateEntity): DeviceStateEntity
+    }
+
+    class DeviceEntity {
+        +deviceId: Long
+        +tenantId: Long
+        +homeId: Long
+        +roomId: Long
+        +deviceTypeId: Long
+        +name: String
+        +manufacturer: String
+        +model: String
+        +serialNumber: String
+        +connectionType: String
+        +protocolId: Long
+        +location: String
+        +latitude: Double
+        +longitude: Double
+        +status: String
+        +lastSeen: Date
+        +isOnline: Boolean
+        +createdAt: Date
+        +updatedAt: Date
+    }
+
+    class DeviceTypeEntity {
+        +deviceTypeId: Long
+        +name: String
+        +description: String
+        +category: String
+    }
+
+    class DeviceStateEntity {
+        +deviceStateId: Long
+        +deviceId: Long
+        +propertyId: Long
+        +stateValue: String
+        +timestamp: Date
+    }
+}
+
+' Связи между слоями
+DeviceController ..> DeviceRequest : использует
+DeviceController ..> DeviceResponse : использует
+DeviceController ..> DeviceStateResponse : использует
+DeviceController ..> DeviceService : использует
+DefaultDeviceService ..> DeviceRepository : использует
+DefaultDeviceService ..> DeviceTypeRepository : использует
+DefaultDeviceService ..> DeviceStateRepository : использует
+DefaultDeviceService ..> DeviceEntity : преобразует в/из
+DefaultDeviceService ..> DeviceStateEntity : преобразует в/из
+DeviceService <|.. DefaultDeviceService
+
+' Стили (необязательно)
+skinparam class {
+    BackgroundColor #E6E6FF
+    BorderColor #808080
+}
+
+skinparam interface {
+    BackgroundColor #F0FFF0
+    BorderColor #808080
+}
+
+' Описания компонентов в виде заметок (необязательно)
+note top of DeviceController : "Обрабатывает входящие HTTP-запросы, проверяет данные \nи вызывает DeviceService для обработки."
+note top of DeviceService : "Определяет бизнес-логику, связанную с управлением устройствами, включая обновления состояния."
+note top of DefaultDeviceService : "Реализация DeviceService, координирует доступ к данным через репозитории."
+note top of DeviceRepository : "Предоставляет интерфейс для взаимодействия с таблицей устройств в базе данных."
+note top of DeviceTypeRepository : "Предоставляет интерфейс для взаимодействия с таблицей типов устройств в базе данных."
+note top of DeviceStateRepository : "Предоставляет интерфейс для взаимодействия с таблицей состояний устройств в базе данных."
+note top of DeviceEntity : "Представляет структуру данных устройства в базе данных."
+note top of DeviceTypeEntity : "Представляет структуру данных типа устройства в базе данных."
+note top of DeviceStateEntity : "Представляет структуру данных состояния устройства в базе данных."
+
+@enduml

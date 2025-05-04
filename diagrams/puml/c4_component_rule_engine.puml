@@ -1,0 +1,31 @@
+@startuml
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Component.puml
+
+SHOW_PERSON_OUTLINE()
+
+Container(rule_engine, "Rule Engine", "Drools / Jess / Custom DSL", "Оценивает правила автоматизации и условия. Реализует язык, специфичный для области (DSL), для пользователей, чтобы определять правила.") {
+
+    Component(rule_parser, "Rule Parser", "ANTLR/Custom", "Преобразует правила, написанные на DSL, в структуру данных, понятную для Rule Engine.")
+
+    Component(inference_engine, "Inference Engine", "Drools/Jess core", "Выводит новые факты и принимает решения на основе правил и текущего состояния системы.")
+
+    Component(knowledge_base, "Knowledge Base", "In-Memory/Database", "Хранит правила, факты и онтологии, используемые Inference Engine.")
+
+    Component(dsl_editor, "DSL Editor", "Web Component/Custom", "Предоставляет интерфейс для пользователей для создания и редактирования правил на DSL.")
+}
+
+Container(automation_engine, "Automation Engine", "Java / Spring", "Исполняет правила автоматизации на основе событий и условий. Слушает шину событий и инициирует действия. Auto-Scaling.")
+
+Rel(rule_parser, inference_engine, "Использует", "Для оценки правил.")
+Rel(inference_engine, knowledge_base, "Обращается", "Правила и факты.")
+Rel(dsl_editor, rule_parser, "Генерирует", "Правила на DSL.")
+
+' Внешние связи
+Rel(automation_engine, rule_engine, "Использует", "API.  Оценка правил автоматизации.")
+
+note top of rule_engine
+    Технология, специфичная для оценки правил. DSL.
+end note
+
+center footer PlantUML - C4 Model
+@enduml

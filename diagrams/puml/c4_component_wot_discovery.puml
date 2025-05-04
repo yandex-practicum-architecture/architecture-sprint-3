@@ -1,0 +1,33 @@
+@startuml
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Component.puml
+
+SHOW_PERSON_OUTLINE()
+
+Container(wot_discovery, "WoT Discovery", "Java / Spring", "Обнаруживает устройства WoT в локальной сети. Использует mDNS/DNS-SD или другие протоколы обнаружения.") {
+
+    Component(discovery_scanner, "Discovery Scanner", "Java / Spring", "Выполняет сканирование локальной сети для обнаружения устройств WoT, использующих различные протоколы (mDNS/DNS-SD, UPnP, etc.).")
+
+    Component(protocol_handler, "Protocol Handler", "Java / Spring", "Обрабатывает специфические протоколы обнаружения, преобразуя информацию об устройствах в унифицированный формат.")
+
+    Component(device_registry, "Device Registry", "In-Memory/Redis", "Временно хранит информацию об обнаруженных устройствах WoT.")
+
+    Component(event_publisher, "Event Publisher", "Java / Spring", "Публикует события об обнаружении новых устройств WoT в Event Bus.")
+}
+
+Container(event_bus, "Event Bus", "Kafka/RabbitMQ", "Обеспечивает асинхронную коммуникацию между сервисами бэкенда, позволяя передачу и обработку событий и сообщений без необходимости прямого соединения между ними.")
+Container(wot_gateway, "WoT Gateway", "Java / Spring", "Адаптирует и переводит описания WoT-объектов, управляет взаимодействием с локальными устройствами.")
+
+Rel(discovery_scanner, protocol_handler, "Использует", "Для обработки информации об устройствах.")
+Rel(protocol_handler, device_registry, "Сохраняет", "Информацию об обнаруженных устройствах.")
+Rel(event_publisher, event_bus, "Публикует", "События об обнаружении новых устройств.")
+
+' Внешние связи
+Rel(wot_discovery, event_bus, "Публикует", "Events об обнаружении устройств.")
+Rel(wot_discovery, wot_gateway, "Уведомляет", "REST API (или другое). Найден WoT-объект.")
+
+note top of wot_discovery
+    Cloud-Native: Kubernetes, Auto-Scaling, Service Discovery, Load Balancing
+end note
+
+center footer PlantUML - C4 Model
+@enduml

@@ -1,0 +1,67 @@
+@startuml
+' Diagram 2: WoT Objects
+
+entity Device {
+  *device_id: bigint(20)
+  tenant_id: bigint(20)
+  home_id: bigint(20)
+  room_id: bigint(20)
+  device_type_id: bigint(20)
+  name: varchar(255)
+  manufacturer: varchar(255)
+  model: varchar(255)
+  serial_number: varchar(255)
+  connection_type: varchar(255)
+  protocol_id: bigint(20)
+  location: varchar(255)
+  latitude: decimal(10,8)
+  longitude: decimal(11,8)
+  status: varchar(255)
+  last_seen: datetime
+  is_online: boolean
+  created_at: datetime
+  updated_at: datetime
+}
+
+entity WoTObject {
+  *wot_object_id: bigint(20)
+  device_id: bigint(20)
+  thing_description: text
+  internal_format: text
+  created_at: datetime
+  updated_at: datetime
+}
+
+entity WoTProperty {
+    *wot_property_id: bigint(20)
+    wot_object_id: bigint(20)
+    name: varchar(255)
+    data_type: varchar(255)
+    unit: varchar(255)
+    is_writable: boolean
+    is_observable: boolean
+}
+
+entity WoTActions {
+    *wot_action_id: bigint(20)
+    wot_object_id: bigint(20)
+    name: varchar(255)
+    description: text
+    input_type: varchar(255)
+    output_type: varchar(255)
+}
+
+entity WoTEvent {
+    *wot_event_id: bigint(20)
+    wot_object_id: bigint(20)
+    name: varchar(255)
+    description: text
+    data_type: varchar(255)
+}
+
+' Relationships
+Device }-- WoTObject : описывает
+WoTObject }-- WoTProperty : имеет свойства
+WoTObject }-- WoTActions : может выполнять действия
+WoTObject }-- WoTEvent: генерирует события
+@enduml

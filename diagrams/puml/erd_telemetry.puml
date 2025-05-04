@@ -1,0 +1,66 @@
+@startuml
+' Diagram 1: Telemetry, Health, Diagnostics
+
+entity Device {
+  *device_id: bigint(20)
+  tenant_id: bigint(20)
+  home_id: bigint(20)
+  room_id: bigint(20)
+  device_type_id: bigint(20)
+  name: varchar(255)
+  manufacturer: varchar(255)
+  model: varchar(255)
+  serial_number: varchar(255)
+  connection_type: varchar(255)
+  protocol_id: bigint(20)
+  location: varchar(255)
+  latitude: decimal(10,8)
+  longitude: decimal(11,8)
+  status: varchar(255)
+  last_seen: datetime
+  is_online: boolean
+  created_at: datetime
+  updated_at: datetime
+}
+
+entity DeviceProperty {
+    *property_id: bigint(20)
+    device_type_id: bigint(20)
+    name: varchar(255)
+    data_type: varchar(255)
+    unit: varchar(255)
+    is_writable: boolean
+    is_visible: boolean
+}
+
+entity DeviceTelemetry {
+  *telemetry_id: bigint(20)
+  device_id: bigint(20)
+  property_id: bigint(20)
+  sensor_value: decimal(15,5)
+  timestamp: datetime
+}
+
+entity DeviceHealth {
+  *device_health_id : bigint(20)
+  device_id : bigint(20)
+  is_online : boolean
+  battery_level : integer
+  errors : text
+  last_updated : datetime
+}
+
+entity RemoteDiagnosticRequest {
+  *request_id: bigint(20)
+  device_id: bigint(20)
+  request_time: datetime
+  status: varchar(255)
+  log: text
+}
+
+' Relationships
+DeviceTelemetry }-- Device : относится к устройству
+DeviceTelemetry }-- DeviceProperty : относится к свойству
+Device }-- DeviceHealth : имеет статус здоровья
+Device }-- RemoteDiagnosticRequest : запрошена диагностика
+@enduml

@@ -1,0 +1,95 @@
+@startuml
+' Skin params
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Arial
+skinparam shadowing false
+
+' Объявление пакетов для каждого слоя
+package "Controllers" {
+    class RegistrationController {
+        +registerDeviceByQRCode(QRCodeRequest): DeviceResponse
+        +registerDeviceByManufacturerAccount(ManufacturerAccountRequest): DeviceResponse
+    }
+
+    class QRCodeRequest {
+        +qrCodeData: String
+    }
+
+    class ManufacturerAccountRequest {
+        +manufacturerAccountId: String
+        +manufacturerAccountToken: String
+    }
+
+    class DeviceResponse {
+        +deviceId: Long
+        +status: String
+    }
+}
+
+package "Services" {
+    interface RegistrationService {
+        +registerDeviceByQRCode(qrCodeData: String): Device
+        +registerDeviceByManufacturerAccount(manufacturerAccountId: String, manufacturerAccountToken: String): Device
+    }
+
+    class DefaultRegistrationService implements RegistrationService {
+        +registerDeviceByQRCode(qrCodeData: String): Device
+        +registerDeviceByManufacturerAccount(manufacturerAccountId: String, manufacturerAccountToken: String): Device
+    }
+}
+
+package "Repository" {
+    interface DeviceRepository {
+        +save(DeviceEntity): DeviceEntity
+        +findBySerialNumber(serialNumber: String): Optional<DeviceEntity>
+    }
+    interface ManufacturerAccountRepository {
+        +findByAccountIdAndToken(accountId: String, token: String): Optional<ManufacturerAccountEntity>
+    }
+
+    class DeviceEntity {
+        +deviceId: Long
+        +serialNumber: String
+        +manufacturer: String
+        +model: String
+        +status: String
+    }
+
+    class ManufacturerAccountEntity {
+        +accountId: String
+        +token: String
+        +deviceId: Long
+    }
+}
+
+' Связи между слоями
+RegistrationController ..> QRCodeRequest : использует
+RegistrationController ..> ManufacturerAccountRequest : использует
+RegistrationController ..> DeviceResponse : использует
+RegistrationController ..> RegistrationService : использует
+DefaultRegistrationService ..> DeviceRepository : использует
+DefaultRegistrationService ..> ManufacturerAccountRepository : использует
+DefaultRegistrationService ..> DeviceEntity : преобразует в/из
+DefaultRegistrationService <|.. RegistrationService
+
+' Стили (необязательно)
+skinparam class {
+    BackgroundColor #E6E6FF
+    BorderColor #808080
+}
+
+skinparam interface {
+    BackgroundColor #F0FFF0
+    BorderColor #808080
+}
+
+' Описания компонентов в виде заметок (необязательно)
+note top of RegistrationController : "Обрабатывает запросы на регистрацию устройств."
+note top of RegistrationService : "Определяет бизнес-логику регистрации."
+note top of DefaultRegistrationService : "Реализация RegistrationService, координирует репозитории."
+note top of DeviceRepository : "Репозиторий для устройств."
+note top of ManufacturerAccountRepository : "Репозиторий для аккаунтов производителей."
+note top of DeviceEntity : "Сущность устройства."
+note top of ManufacturerAccountEntity : "Сущность аккаунта производителя."
+
+@enduml

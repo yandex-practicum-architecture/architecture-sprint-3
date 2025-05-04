@@ -1,0 +1,106 @@
+@startuml
+' Skin params
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Arial
+skinparam shadowing false
+
+package "Scheduler" {
+    class SchedulerService {
+        +scheduleAutomation(Automation): void
+        +rescheduleAutomation(Automation): void
+        +unscheduleAutomation(automationId: String): void
+        +handleMissedTriggers(): void
+    }
+
+    interface TriggerHandler {
+        +handleTrigger(Trigger, Automation): void
+    }
+
+    class DefaultSchedulerService implements SchedulerService {
+        +scheduleAutomation(Automation): void
+        +rescheduleAutomation(Automation): void
+        +unscheduleAutomation(automationId: String): void
+        +handleMissedTriggers(): void
+    }
+
+    class TimeBasedTriggerHandler implements TriggerHandler {
+        +handleTrigger(Trigger, Automation): void
+    }
+
+    class EventBasedTriggerHandler implements TriggerHandler {
+        +handleTrigger(Trigger, Automation): void
+    }
+
+    class CronTriggerHandler implements TriggerHandler {
+        +handleTrigger(Trigger, Automation): void
+    }
+}
+
+package "Domain" {
+    class Automation {
+        +automationId: String
+        +name: String
+        +description: String
+        +enabled: boolean
+        +triggers: List<Trigger>
+    }
+
+    class Trigger {
+        +triggerId: String
+        +triggerType: String
+        +triggerConfig: Map
+    }
+}
+
+package "Services" {
+    interface AutomationService {
+        +executeAutomation(Automation): void
+    }
+
+    interface RuleEngineService {
+        +evaluateRules(automationId: String, context: Map): List<InferenceResult>
+    }
+
+    class InferenceResult {
+        +resultData: Map
+    }
+}
+
+' Connections between layers
+SchedulerService ..> Automation : использует
+SchedulerService ..> Trigger : использует
+DefaultSchedulerService ..> TriggerHandler : использует
+TriggerHandler <|.. TimeBasedTriggerHandler : реализует
+TriggerHandler <|.. EventBasedTriggerHandler : реализует
+TriggerHandler <|.. CronTriggerHandler : реализует
+
+TimeBasedTriggerHandler ..> RuleEngineService : использует
+EventBasedTriggerHandler ..> RuleEngineService : использует
+CronTriggerHandler ..> RuleEngineService : использует
+
+DefaultSchedulerService ..> AutomationService : использует
+SchedulerService <|.. DefaultSchedulerService
+
+' Styling (optional)
+skinparam class {
+    BackgroundColor #E6E6FF
+    BorderColor #808080
+}
+
+skinparam interface {
+    BackgroundColor #F0FFF0
+    BorderColor #808080
+}
+
+' Component descriptions as notes
+note top of SchedulerService : "Интерфейс для планирования и управления выполнением автоматизаций."
+note top of DefaultSchedulerService : "Реализация SchedulerService, управляет расписанием и запускает обработчики триггеров."
+note top of TriggerHandler : "Интерфейс для обработчиков триггеров разных типов (время, события, Cron)."
+note top of TimeBasedTriggerHandler : "Обработчик триггеров на основе времени."
+note top of EventBasedTriggerHandler : "Обработчик триггеров на основе событий."
+note top of CronTriggerHandler : "Обработчик Cron-триггеров."
+note top of Automation : "Доменная модель автоматизации."
+note top of Trigger : "Доменная модель триггера."
+note top of AutomationService : "Сервис для выполнения автоматизаций."
+note top of RuleEngineService : "Сервис для оценки правил."
+@enduml

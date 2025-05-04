@@ -1,0 +1,84 @@
+@startuml
+' Diagram 3: Device Core
+
+entity Device {
+  *device_id: bigint(20)
+  tenant_id: bigint(20)
+  home_id: bigint(20)
+  room_id: bigint(20)
+  device_type_id: bigint(20)
+  name: varchar(255)
+  manufacturer: varchar(255)
+  model: varchar(255)
+  serial_number: varchar(255)
+  connection_type: varchar(255)
+  protocol_id: bigint(20)
+  location: varchar(255)
+  latitude: decimal(10,8)
+  longitude: decimal(11,8)
+  status: varchar(255)
+  last_seen: datetime
+  is_online: boolean
+  created_at: datetime
+  updated_at: datetime
+}
+
+entity DeviceType {
+    *device_type_id : bigint(20)
+    name: varchar(255)
+    description: text
+    category: varchar(255)
+}
+
+entity DeviceProperty {
+    *property_id: bigint(20)
+    device_type_id: bigint(20)
+    name: varchar(255)
+    data_type: varchar(255)
+    unit: varchar(255)
+    is_writable: boolean
+    is_visible: boolean
+}
+
+entity DeviceFunction {
+    *function_id: bigint(20)
+    device_type_id: bigint(20)
+    name: varchar(255)
+    description: text
+}
+
+entity DeviceState {
+  *device_state_id: bigint(20)
+  device_id: bigint(20)
+  property_id: bigint(20)
+  state_value: text
+  timestamp: datetime
+}
+
+entity Certificate {
+    *certificate_id : bigint(20)
+    device_id : bigint(20)
+    certificate_data: text
+    private_key: text
+    expiration_date: datetime
+    created_at: datetime
+    updated_at: datetime
+}
+
+entity Protocol {
+    *protocol_id: bigint(20)
+    name: varchar(255)
+    description: text
+    type: varchar(255)
+}
+
+
+' Relationships
+Device }-- DeviceType : является типом
+DeviceType }-- DeviceProperty : определяет свойства
+DeviceType }-- DeviceFunction : может выполнять функции
+DeviceState }-- Device : относится к устройству
+DeviceState }-- DeviceProperty : относится к свойству
+Certificate }-- Device : имеет сертификат
+Device }-- Protocol : использует протокол
+@enduml

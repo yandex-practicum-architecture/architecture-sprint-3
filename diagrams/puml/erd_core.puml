@@ -1,0 +1,141 @@
+@startuml
+' User and Tenant Diagram
+
+entity User {
+  *user_id: bigint(20)
+  tenant_id: bigint(20)
+  username: varchar(255)
+  password: varchar(255)
+  email: varchar(255)
+  first_name: varchar(255)
+  last_name: varchar(255)
+  phone_number: varchar(20)
+  address: text
+  role: varchar(255)
+  last_login: datetime
+  is_active: boolean
+  created_at: datetime
+  updated_at: datetime
+}
+
+entity Tenant {
+  *tenant_id: bigint(20)
+  name: varchar(255)
+  description: text
+  domain: varchar(255)
+  contact_email: varchar(255)
+  contact_phone: varchar(255)
+  address: text
+  subscription_plan: varchar(255)
+  billing_cycle: varchar(255)
+  api_key: varchar(255)
+  is_active: boolean
+  created_at: datetime
+  updated_at: datetime
+}
+
+entity Home {
+  *home_id: bigint(20)
+  tenant_id: bigint(20)
+  name: varchar(255)
+  address: text
+  latitude: decimal(10,8)
+  longitude: decimal(11,8)
+  created_at: datetime
+  updated_at: datetime
+}
+
+entity UserHome {
+  *user_id: bigint(20)
+  *home_id: bigint(20)
+  role: varchar(255)
+  is_owner: boolean
+  created_at: datetime
+  updated_at: datetime
+}
+
+entity UserSettings {
+  *user_id: bigint(20)
+  theme: varchar(255)
+  language: varchar(255)
+  font_size: varchar(255)
+  push_notifications_enabled: boolean
+  email_notifications_enabled: boolean
+  data_access_permissions: json
+  two_factor_auth_enabled: boolean
+  created_at: datetime
+  updated_at: datetime
+}
+
+entity Area {
+    *area_id: bigint(20)
+    home_id: bigint(20)
+    name: varchar(255)
+    description: text
+    area_type : varchar(255)
+    created_at: datetime
+    updated_at: datetime
+}
+
+entity Room {
+  *room_id: bigint(20)
+  area_id: bigint(20)
+  name: varchar(255)
+  description: text
+  created_at: datetime
+  updated_at: datetime
+}
+
+entity Event {
+  *event_id: bigint(20)
+  event_type: varchar(255)
+  payload: json
+  source: varchar(255)
+  tenant_id: bigint(20)
+  user_id: bigint(20)
+  device_id: bigint(20)
+  timestamp: datetime
+}
+
+entity ApiLog {
+  *log_id: bigint(20)
+  tenant_id: bigint(20)
+  user_id: bigint(20)
+  device_id: bigint(20)
+  endpoint: varchar(255)
+  method: varchar(255)
+  request_body: text
+  response_body: text
+  status_code: integer
+  request_time: datetime
+  response_time: datetime
+}
+
+entity CloudServiceIntegration {
+    *integration_id : bigint(20)
+    tenant_id : bigint(20)
+    service_name : varchar(255)
+    api_endpoint : varchar(255)
+    api_key : varchar(255)
+    configuration : json
+    is_enabled : boolean
+    created_at : datetime
+    updated_at : datetime
+}
+
+
+' Relationships
+
+' Relationships
+User }-- Tenant : управляет
+Home }-- Tenant : принадлежит
+UserHome }-- User : связывает
+UserHome }-- Home : связывает
+UserSettings }-- User : принадлежит
+Home }-- Area : содержит
+Area }-- Room : содержит
+Event }-- User : относится к
+ApiLog }-- User : задействует
+CloudServiceIntegration }-- Tenant : настроена для
+
+@enduml

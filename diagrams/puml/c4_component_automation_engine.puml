@@ -1,0 +1,45 @@
+@startuml
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Component.puml
+
+SHOW_PERSON_OUTLINE()
+
+Container(automation_engine, "Automation Engine", "Java / Spring", "Исполняет правила автоматизации на основе событий и условий. Слушает шину событий и инициирует действия.") {
+
+    Component(rule_management, "Rule Management", "Java / Spring", "Предоставляет API для создания, обновления, удаления и просмотра правил автоматизации.  CRUD-операции, валидация, преобразование правил.")
+
+    Component(event_listener, "Event Listener", "Java / Spring", "Слушает шину событий и получает информацию о событиях, которые могут быть триггерами для автоматизации. Подписка, фильтрация, преобразование событий.")
+
+    Component(rule_evaluator, "Rule Evaluator", "Java / Spring", "Оценивает правила автоматизации на основе текущего состояния системы и событий. Загрузка правил, оценка с использованием Rule Engine, определение действий.")
+
+    Component(action_executor, "Action Executor", "Java / Spring", "Выполняет действия, определенные правилами автоматизации. Взаимодействие с другими сервисами, логирование действий, обработка ошибок.")
+
+    Component(scheduler, "Scheduler", "Java / Spring", "Планирует выполнение правил автоматизации на основе времени или других триггеров. Управление расписанием, поддержка триггеров, обработка пропущенных событий.")
+    
+    Component(rule_repository, "Rule Repository", "JPA/MongoDB", "Хранит правила автоматизации в базе данных. Предоставляет доступ к правилам, CRUD-операции.")
+    
+}
+
+Container(event_bus, "Event Bus", "Kafka/RabbitMQ", "Обеспечивает асинхронную коммуникацию между сервисами бэкенда, позволяя передачу и обработку событий и сообщений без необходимости прямого соединения между ними.")
+Component(rule_engine, "Rule Engine", "Drools / Jess / Custom DSL", "Оценивает правила автоматизации и условия. Реализует язык, специфичный для области (DSL), для пользователей, чтобы определять правила.")
+Container(device_manager, "Device Manager", "Java / Spring", "Manages devices, their properties, and relationships to users and zones. Предоставляет CRUD-операции для устройств.")
+Container(api_gateway, "API Gateway", "Java / Spring", "Единственная точка доступа для всех API-запросов. Выполняет аутентификацию, авторизацию и маршрутизацию запросов к соответствующим микросервисам.")
+
+Rel(rule_management, rule_repository, "Читает/Записывает", "JPA/MongoDB запросы. Операции CRUD.")
+Rel(event_listener, event_bus, "Получает", "События. Изменение состояния устройств.")
+Rel(rule_evaluator, rule_management, "Читает", "API. Получение правил автоматизации.")
+Rel(rule_evaluator, rule_engine, "Использует", "API. Оценка правил.")
+Rel(action_executor, device_manager, "Использует", "API. Управление устройствами.")
+Rel(action_executor, event_bus, "Публикует", "Команды. Отправка команд управления устройствами.")
+Rel(scheduler, rule_evaluator, "Запускает", "API. Оценка правил.")
+
+' Внешние связи
+Rel(automation_engine, event_bus, "Получает/Публикует", "События. Обмен событиями и командами управления.")
+Rel(automation_engine, rule_engine, "Использует", "API. Оценка правил автоматизации.")
+Rel(api_gateway, automation_engine, "Использует", "gRPC / REST API. Запрос/Ответ")
+
+note top of automation_engine
+    Cloud-Native: Kubernetes, Auto-Scaling, Service Discovery, Load Balancing
+end note
+
+center footer PlantUML - C4 Model
+@enduml

@@ -1,0 +1,102 @@
+@startuml
+' Automation Diagram
+
+entity Automation {
+  *automation_id: bigint(20)
+  user_id: bigint(20)
+  home_id: bigint(20)
+  name: varchar(255)
+  description: text
+  enabled: boolean
+  created_at: datetime
+  updated_at: datetime
+}
+
+entity Trigger {
+  *trigger_id: bigint(20)
+  automation_id: bigint(20)
+  trigger_type: varchar(255)
+  trigger_config: json
+  created_at: datetime
+  updated_at: datetime
+}
+
+entity Action {
+  *action_id: bigint(20)
+  automation_id: bigint(20)
+  action_type: varchar(255)
+  action_config: json
+  created_at: datetime
+  updated_at: datetime
+}
+
+entity Rule {
+  *rule_id: bigint(20)
+  name: varchar(255)
+  description: text
+  condition: text
+  action: text
+  enabled: boolean
+  automation_id: bigint(20)
+  created_at: datetime
+  updated_at: datetime
+}
+
+entity DslRule {
+    *dsl_rule_id: bigint(20)
+    name: varchar(255)
+    description: text
+    dsl_content: text
+    created_at: datetime
+    updated_at: datetime
+}
+
+entity InferenceResult {
+    *inference_result_id: bigint(20)
+    rule_id: bigint(20)
+    automation_id: bigint(20)
+    result_data: json
+    timestamp: datetime
+}
+
+entity User {
+  *user_id: bigint(20)
+  tenant_id: bigint(20)
+  username: varchar(255)
+  password: varchar(255)
+  email: varchar(255)
+  first_name: varchar(255)
+  last_name: varchar(255)
+  phone_number: varchar(20)
+  address: text
+  role: varchar(255)
+  last_login: datetime
+  is_active: boolean
+  created_at: datetime
+  updated_at: datetime
+}
+
+entity Home {
+  *home_id: bigint(20)
+  tenant_id: bigint(20)
+  name: varchar(255)
+  address: text
+  latitude: decimal(10,8)
+  longitude: decimal(11,8)
+  created_at: datetime
+  updated_at: datetime
+}
+
+' Relationships
+' Relationships
+Automation }-- User : создан
+Automation }-- Home : применяется к
+Automation --o{ Trigger : запускает
+Automation --o{ Action : выполняет
+Automation }-- Rule : использует правило
+Rule }-- DslRule : основано на
+DslRule }-- Automation : используется в
+Automation }-- InferenceResult: генерирует
+InferenceResult }-- Rule : связан с
+
+@enduml

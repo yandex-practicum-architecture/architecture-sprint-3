@@ -1,0 +1,209 @@
+@startuml
+
+skinparam backgroundColor #FFFFFF
+skinparam defaultFontName Arial
+skinparam shadowing false
+
+package "Controllers" {
+    class AutomationController {
+        +createAutomation(AutomationRequest): AutomationResponse
+        +getAutomation(automationId: String): AutomationResponse
+        +updateAutomation(automationId: String, AutomationRequest): AutomationResponse
+        +deleteAutomation(automationId: String): ResponseEntity<Void>
+        +getAutomationsByUser(userId: String): List<AutomationResponse>
+    }
+
+    class AutomationRequest {
+        +name: String
+        +description: String
+        +enabled: boolean
+        +triggerConfigs: List<TriggerConfig>
+        +actionConfigs: List<ActionConfig>
+    }
+
+    class AutomationResponse {
+        +automationId: String
+        +name: String
+        +description: String
+        +enabled: boolean
+        +triggers: List<TriggerResponse>
+        +actions: List<ActionResponse>
+    }
+
+        class TriggerConfig {
+            +triggerType: String
+            +config: JSON
+        }
+
+        class ActionConfig {
+            +actionType: String
+            +config: JSON
+        }
+        class TriggerResponse {
+            +triggerId: String
+            +triggerType: String
+            +config: JSON
+        }
+
+        class ActionResponse {
+            +actionId: String
+            +actionType: String
+            +config: JSON
+        }
+}
+
+package "Services" {
+    interface AutomationService {
+        +createAutomation(Automation): Automation
+        +getAutomation(automationId: String): Automation
+        +updateAutomation(automationId: String, Automation): Automation
+        +deleteAutomation(automationId: String): void
+        +getAutomationsByUser(userId: String): List<Automation>
+    }
+
+    class DefaultAutomationService implements AutomationService {
+        +createAutomation(Automation): Automation
+        +getAutomation(automationId: String): Automation
+        +updateAutomation(automationId: String, Automation): Automation
+        +deleteAutomation(automationId: String): void
+        +getAutomationsByUser(userId: String): List<Automation>
+    }
+
+    interface RuleEngineService {
+       +evaluateRules(automationId: String, context: JSON): List<InferenceResult>
+    }
+
+    class DroolsRuleEngineService implements RuleEngineService {
+       +evaluateRules(automationId: String, context: JSON): List<InferenceResult>
+    }
+}
+
+package "Repository" {
+    interface AutomationRepository {
+        +findById(automationId: String): Optional<AutomationEntity>
+        +save(AutomationEntity): AutomationEntity
+        +deleteById(automationId: String): void
+        +findByUserId(userId: String): List<AutomationEntity>
+    }
+
+    class AutomationEntity {
+        +automationId: String
+        +userId: String
+        +homeId: String
+        +name: String
+        +description: String
+        +enabled: boolean
+        +createdAt: Date
+        +updatedAt: Date
+    }
+
+    interface TriggerRepository {
+       +findByAutomationId(automationId: String): List<TriggerEntity>
+    }
+     interface ActionRepository {
+       +findByAutomationId(automationId: String): List<ActionEntity>
+    }
+      class TriggerEntity {
+            +triggerId: String
+            +automationId: String
+            +triggerType: String
+            +triggerConfig: JSON
+            +createdAt: Date
+            +updatedAt: Date
+        }
+
+        class ActionEntity {
+            +actionId: String
+            +automationId: String
+            +actionType: String
+            +actionConfig: JSON
+            +createdAt: Date
+            +updatedAt: Date
+        }
+}
+
+package "Domain" {
+    class Automation {
+        +automationId: String
+        +userId: String
+        +homeId: String
+        +name: String
+        +description: String
+        +enabled: boolean
+        +triggers: List<Trigger>
+        +actions: List<Action>
+    }
+
+    class Trigger {
+        +triggerId: String
+        +automationId: String
+        +triggerType: String
+        +triggerConfig: JSON
+    }
+
+    class Action {
+        +actionId: String
+        +automationId: String
+        +actionType: String
+        +actionConfig: JSON
+    }
+
+    class Rule {
+        +ruleId: String
+        +name: String
+        +description: String
+        +condition: String
+        +action: String
+        +enabled: boolean
+    }
+
+     class InferenceResult {
+            +inferenceResultId: String
+            +ruleId: String
+            +automationId: String
+            +resultData: JSON
+            +timestamp: Date
+        }
+}
+
+' Connections between layers
+AutomationController ..> AutomationRequest : использует
+AutomationController ..> AutomationResponse : использует
+AutomationController ..> AutomationService : использует
+DefaultAutomationService ..> AutomationRepository : использует
+DefaultAutomationService ..> RuleEngineService : использует
+DefaultAutomationService ..> AutomationEntity : преобразует в/из
+AutomationService <|.. DefaultAutomationService
+DefaultAutomationService ..> TriggerRepository : использует
+DefaultAutomationService ..> ActionRepository : использует
+
+Automation <.. AutomationEntity : преобразует в/из
+' Relationships
+Automation *-- Trigger : запускает
+Automation *-- Action : выполняет
+DroolsRuleEngineService ..> Rule : использует
+RuleEngineService <|.. DroolsRuleEngineService
+DroolsRuleEngineService ..> InferenceResult : генерирует
+
+' Styling (optional)
+skinparam class {
+    BackgroundColor #E6E6FF
+    BorderColor #808080
+}
+
+skinparam interface {
+    BackgroundColor #F0FFF0
+    BorderColor #808080
+}
+
+note top of AutomationController : "Обрабатывает HTTP запросы, валидирует данные, nи вызывает AutomationService для обработки."
+note top of AutomationService : "Определяет бизнес-логику для управления автоматизациями."
+note top of DefaultAutomationService : "Реализация AutomationService, координирует доступ к данным через AutomationRepository, запускает RuleEngine."
+note top of AutomationRepository : "Предоставляет интерфейс для взаимодействия с базой данных для автоматизаций."
+note top of AutomationEntity : "Представляет структуру данных автоматизации в базе данных."
+note top of RuleEngineService : "Интерфейс для движка правил."
+note top of DroolsRuleEngineService : "Реализация движка правил на основе Drools."
+note top of Automation : "Доменная модель автоматизации."
+note top of Trigger : "Доменная модель триггера."
+note top of Action : "Доменная модель действия."
+@enduml

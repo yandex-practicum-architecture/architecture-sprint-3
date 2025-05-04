@@ -1,0 +1,54 @@
+@startuml
+!includeurl https://raw.githubusercontent.com/RicardoNiepel/C4-PlantUML/master/C4_Component.puml
+
+Container(device_manager, "Device Manager", "Java / Spring", "Управляет устройствами, их свойствами, а также отношениями с пользователями, комнатами и зонами, а также правилами автоматизации.") {
+
+    Component(device_api, "Device API", "REST/gRPC", "Предоставляет API для управления устройствами, получения информации об устройствах и обновления их статуса. Используется API Gateway и WoT Gateway.")
+
+    Component(device_repository, "Device Repository", "JPA/MongoDB", "Обеспечивает доступ к данным об устройствах, хранящимся в базе данных.  CRUD операции для сущности Device.")
+    
+    Component(device_registration, "Device Registration", "Java / Spring", "Обрабатывает процесс регистрации новых устройств в системе. Поддержка различных методов регистрации (QR-код, интеграция с аккаунтом производителя).")
+
+    Component(device_configuration, "Device Configuration", "Java / Spring", "Управляет конфигурацией устройств, включая их свойства и параметры.  Валидация конфигурации.")
+
+    Component(device_association, "Device Association", "Java / Spring", "Управляет связями между устройствами, пользователями, комнатами и зонами.  Обеспечение целостности связей.")
+
+    Component(device_status_updater, "Device Status Updater", "Java / Spring", "Получает обновления статуса устройств из Event Bus и WoT Gateway и обновляет информацию в базе данных.")
+
+    Component(event_publisher, "Event Publisher", "Java / Spring", "Публикует события, связанные с устройствами (создание, обновление, удаление), в Event Bus.")
+    
+    Component(device_event_listener, "Device Event Listener", "Kafka/RabbitMQ", "Потребляет события из Event Bus.")
+}
+
+ComponentDb(database, "Database", "PostgreSQL/MongoDB", "Хранит данные пользователей, информацию об устройствах, правила автоматизации и конфигурации зон.")
+
+Container(event_bus, "Event Bus", "Kafka/RabbitMQ", "Обеспечивает асинхронную коммуникацию между сервисами бэкенда, позволяя передачу и обработку событий и сообщений без необходимости прямого соединения между ними.")
+
+Container(api_gateway, "API Gateway", "Java / Spring", "Единственная точка доступа для всех API-запросов. Выполняет аутентификацию, авторизацию и маршрутизацию запросов к соответствующим микросервисам.")
+
+' Связи с компонентами Device Manager
+Rel(device_api, device_repository, "Читает/Записывает", "JPA/MongoDB queries")
+Rel(device_api, device_registration, "Использует", "API")
+Rel(device_api, device_configuration, "Использует", "API")
+Rel(device_api, device_association, "Использует", "API")
+Rel(device_api, event_publisher, "Использует", "API. Публикует события об изменении устройств.")
+
+Rel(device_registration, device_repository, "Записывает", "JPA/MongoDB. Сохраняет информацию о зарегистрированных устройствах.")
+Rel(device_configuration, device_repository, "Записывает", "JPA/MongoDB. Обновляет конфигурацию устройств.")
+Rel(device_association, device_repository, "Записывает", "JPA/MongoDB.  Сохраняет информацию о связях.")
+Rel(device_status_updater, device_repository, "Записывает", "JPA/MongoDB. Обновляет статус устройств.")
+
+Rel(event_publisher, event_bus, "Публикует", "Events (Device Created, Updated, Deleted)")
+Rel(device_event_listener, event_bus, "Потребляет", "Events (Device Status Update)")
+
+Rel(device_status_updater, device_event_listener, "Слушает", "Device Status Update events")
+
+' Внешние связи
+Rel(device_manager, database, "Читает/Записывает", "SQL / NoSQL.  Управление данными об устройствах.")
+Rel(device_manager, event_bus, "Публикует", "Events об изменении устройств.")
+Rel(api_gateway, device_manager, "Использует", "gRPC / REST API. Запрос/Ответ")
+
+title Component Diagram for Device Manager
+
+center footer PlantUML - C4 Model
+@enduml
